@@ -1,15 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
+import {EkimTab, IMuiEkimTabModel, IMuiEkimTabProps} from "./EkimTab";
 import Grid from "@material-ui/core/Grid";
-import ClearIcon from "@material-ui/icons/Menu";
-import Paper from "@material-ui/core/Paper";
-import Input from "@material-ui/core/Input";
-import {EkimTab, IMuiEkimTabModel} from "./EkimTab";
+import AddIcon from "@material-ui/core/SvgIcon/SvgIcon";
+import IconButton from "@material-ui/core/IconButton";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -32,23 +28,95 @@ const useStyles = makeStyles((theme: Theme) =>
     })
 );
 
-export default function EkimTabsPanel() {
+/**
+ * Represents an infrastructure of TabsPanel component.
+ */
+export interface IMuiEkimTabPanelProps {
+    // Tab models.
+    models: Array<IMuiEkimTabModel>;
+
+    //Function to handle text changed in tab.
+    tabTextChanged: (oldModel: IMuiEkimTabModel, newText: string) => any;
+
+    // Function to handle tab removing.
+    removeTab: (model: IMuiEkimTabModel) => any;
+
+    // Function to handle tab selection.
+    selectTab: (model: IMuiEkimTabModel) => any;
+
+    // Function to handle add tab event.
+    addTab: () => any;
+}
+
+export const EkimTabsPanel: React.FC<IMuiEkimTabPanelProps> =({...props
+}: IMuiEkimTabPanelProps) =>
+{
     const classes = useStyles();
-    const [isEditing, setIsEditing] = useState(false);
-    let inputElement = useRef(null);
 
-    let model = {id: "1", text: "", isSelected:false};
+    // Models to show in tabs.
+    const [viewModels, setViewModels] = useState<IMuiEkimTabProps[]>([]);
 
-    const changeText = (oldModel: IMuiEkimTabModel, newText: String) => {};
-    const removeTab = (model: IMuiEkimTabModel) => {};
+    const removeTabLocal = (model: IMuiEkimTabProps) => {
+
+    }
+
+    const changeTabCaption = (model: IMuiEkimTabProps, text: string) => {
+
+    }
+
+    const selectTabLocal = (viewModel:IMuiEkimTabProps) => {
+        let viewModelsTemp = viewModels.map((viewModelTemp, index) => {
+            viewModels[index].isSelected = false;
+
+            if(viewModelTemp.model.id === viewModel.model.id){
+                viewModels[index].isSelected = true;
+            }
+
+            return viewModelTemp;
+        })
+
+        setViewModels(viewModelsTemp);
+    }
+
+    useEffect(() => {
+        setViewModels (props.models.map((model) => {
+            let viewModel = {
+                model: model,
+                isSelected: false,
+                isEditable:true,
+                isLoading: false,
+                removeTab: removeTabLocal,
+                changeTabCaption: changeTabCaption,
+                selectTab: selectTabLocal
+            } as IMuiEkimTabProps;
+
+            return viewModel;
+        }))
+    }, [props.models]);
 
     return (
         <AppBar position="static">
             <Toolbar>
-                <Typography variant="h6" >
-                    <EkimTab model={model} changeText={changeText} removeTab={removeTab} />
-                </Typography>
-                <Button color="inherit">+</Button>
+                <Grid container spacing={1} >
+                    {viewModels.map((viewModel) => {
+                        return(
+                            <Grid item key={viewModel.model.id} >
+                                <EkimTab key={viewModel.model.id}
+                                         model={viewModel.model}
+                                         changeTabCaption={changeTabCaption}
+                                         removeTab={removeTabLocal}
+                                         selectTab={selectTabLocal}
+                                         isSelected={viewModel.isSelected}
+                                         isEditable={viewModel.isEditable}
+                                         isLoading={viewModel.isLoading}
+                                />
+                            </Grid>
+                        )
+                    })}
+                </Grid>
+                <IconButton color="primary" onClick={props.addTab}>
+                    <AddIcon />
+                </IconButton>
             </Toolbar>
         </AppBar>
     );
